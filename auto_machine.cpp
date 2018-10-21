@@ -1,7 +1,4 @@
-﻿#include <iostream>
-#include <fstream>
-#include <string>
-#include <cctype>			//isdigit(),isalpha()
+﻿#include <cctype>			//isdigit(),isalpha()
 #include <algorithm>		//find():在vector中查找指定元素，返回指向该元素的迭代器指针
 #include "machine.h"
 #define BUFFER_SIZE 10		//输入缓冲区大小
@@ -135,8 +132,8 @@ int  main(void) {
 				state = 0;
 				isKey = FindKey(token);
 				if (-1 == isKey) {		//用户自定义的标识符
-					vector<string>::iterator iter = InsertTable(token);
-					Return("id", IterToS(iter));
+					int index = InsertTable(token);
+					Return("id", IntToS(index));
 				}
 				else					//关键字
 					Return(token, "-");

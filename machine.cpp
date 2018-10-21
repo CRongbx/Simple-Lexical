@@ -20,6 +20,10 @@ void PutBuffer(bool left)
 
 void GetChar()
 {
+	//向前指针forwardPre从buffer中读入一个字符放入ch
+	ch = buffer[forwardPtr];
+
+	//移动forward使之指向下一个字符
 	if (forwardPtr == BUFFER_SIZE - 1) {
 		//左半区终点，填充右半区buffer
 		PutBuffer(false);
@@ -30,9 +34,8 @@ void GetChar()
 		PutBuffer(true);
 		forwardPtr = 0;
 	}
-	else {
+	else 
 		forwardPtr++;
-	}
 }
 
 void GetPure()
@@ -123,6 +126,74 @@ void GetPure()
 	}
 	fin.close();
 	/* 将中间文件的文件指针定位到开头，方便后续词法分析处理 */
+	//读取到文件末尾时，流状态是eof，需要将其设置为goodbit才能成功将文件指针移动到文件开头。
+	fmid.clear(ios::goodbit);
 	fmid.seekg(ios::beg);
 	fmid.seekp(ios::beg);
+}
+
+void Return(string token, string value)
+{
+	//以<token,value>的形式写入out文件
+	fout << '<' << token << ',' << value << '>' << endl;
+
+	//移动开始指针和向前指针到下一个单词
+	if (forwardPtr == BUFFER_SIZE - 1) {
+		//左半区终点，填充右半区buffer
+		PutBuffer(false);
+		beginPtr = ++forwardPtr;
+	}
+	else if (forwardPtr == BUFFER_SIZE * 2 - 1) {
+		//右半区终点，填充左半区buffer
+		PutBuffer(true);
+		beginPtr = 0;
+		forwardPtr = 0;
+	}
+	else
+		beginPtr = ++forwardPtr;
+}
+
+void Cat()
+{
+	//在字符串token尾端加一个字符ch
+	token.push_back(ch);
+}
+
+void Retract()
+{
+	if (forwardPtr == BUFFER_SIZE) {
+		forwardPtr = BUFFER_SIZE - 1;
+		//让文件指针从当前位置向文件开始方向移动半个buffer字节
+		fmid.seekg(-BUFFER_SIZE, ios::cur);
+	}
+	else if (forwardPtr == 0) {
+		forwardPtr = BUFFER_SIZE * 2 - 1;
+		fmid.seekg(-BUFFER_SIZE, ios::cur);
+	}
+	forwardPtr--;
+}
+
+int FindKey(const string token)
+{
+	for (int i = 0; i < KEY_SIZE;++i) 
+		if (key[i] == token)
+			return i;
+	return -1;
+}
+
+string IntToS(const int index)
+{
+	return to_string(index);
+}
+
+int InsertTable(const string token)
+{
+	userDefinedIdTable.push_back(token);
+	//该元素的位置指针，由于始终从最后加入vector故位置序号等于容器大小-1
+	return (userDefinedIdTable.size()-1);
+}
+
+void Error()
+{
+	cout << "ERROR!" << endl;
 }
