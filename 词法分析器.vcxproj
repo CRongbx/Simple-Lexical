@@ -143,6 +143,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="auto_machine.cpp" />
+    <ClCompile Include="machine.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="machine.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,26 +1,16 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <fstream>
 #include <string>
 #include <cctype>			//isdigit(),isalpha()
-#include <algorithm>		//find():ÔÚvectorÖĞ²éÕÒÖ¸¶¨ÔªËØ£¬·µ»ØÖ¸Ïò¸ÃÔªËØµÄµü´úÆ÷Ö¸Õë
+#include <algorithm>		//find():åœ¨vectorä¸­æŸ¥æ‰¾æŒ‡å®šå…ƒç´ ï¼Œè¿”å›æŒ‡å‘è¯¥å…ƒç´ çš„è¿­ä»£å™¨æŒ‡é’ˆ
 #include "machine.h"
-#define BUFFER_SIZE 10		//ÊäÈë»º³åÇø´óĞ¡
-
-
+#define BUFFER_SIZE 10		//è¾“å…¥ç¼“å†²åŒºå¤§å°
 using namespace std;
 
 int  main(void) {
-	ofstream fout("test_out.txt");
-	ifstream fin("test_in.txt");
-
-	int state = 0;	//×Ô¶¯»úµ±Ç°×´Ì¬
-	int isKey = -1;		//±êÖ¾µ¥´ÊÊÇ·ñÎª¹Ø¼ü×Ö£¬ÈôÊÇÔòÎªÁĞ±íkeyÖĞµÄÏÂ±ê£»·ñÔòÎª-1	
-	char ch = '\0';		//×Ö·û±äÁ¿£¬´æ·Åµ±Ç°´ÓÎÄ¼ş¶ÁÈëµÄ×Ö·û
-	string token = "";	//×Ö·û´®£¬´æ·Åµ±Ç°ÕıÔÚÊ¶±ğµÄµ¥´Ê×Ö·û´®£»
-	string buffer(BUFFER_SIZE, '\0');	//ÊäÈë»º³åÇø
-	unsigned int forwardPtr = 0;		//×Ö·û´®ÏÂ±ê£¬Åä¶Ô»º³åÇøÊ±µÄÏòÇ°Ö¸Õë
-	unsigned int beginPtr = 0;			//×Ö·û´®ÏÂ±ê£¬Åä¶Ô»º³åÇøÊ±µÄ¿ªÊ¼Ö¸Õë
-	
+	fin.seekg(0);	//è®¾ç½®æ–‡ä»¶getæµæŒ‡é’ˆä½ç½®ä¸ºæ–‡ä»¶èµ·å§‹å¤„
+	fout.seekp(0);	//è®¾ç½®æ–‡ä»¶putæµæŒ‡é’ˆä½ç½®ä¸ºæ–‡ä»¶èµ·å§‹å¤„
+	int state = 0;	//è‡ªåŠ¨æœºå½“å‰çŠ¶æ€
 
 	while (!fin.eof()) {
 		fin >> ch;
@@ -28,7 +18,7 @@ int  main(void) {
 		case 0:
 			token = "";
 			GetChar();
-			GetNbc();
+			GetPure();
 			switch (ch) {
 			case ';':
 				state = 0;
@@ -81,7 +71,7 @@ int  main(void) {
 			case '1':case '2': case '3': case'4':case'5':case'6':case'7':case'8':case '9':case '0':
 				state = 2;
 				break;
-			case '<': 
+			case '<':
 				state = 8;
 				break;
 			case  '+':
@@ -135,27 +125,27 @@ int  main(void) {
 				break;
 			}//switch(ch) case 0
 			break;
-		case 1:										//±êÊ¶·û×´Ì¬
+		case 1:										//æ ‡è¯†ç¬¦çŠ¶æ€
 			Cat();
 			GetChar();
-			if ('_' == ch || isdigit(ch) || isalpha(ch)) 
+			if ('_' == ch || isdigit(ch) || isalpha(ch))
 				state = 1;
 			else {
 				Retract();
 				state = 0;
 				isKey = FindKey(token);
-				if (-1 == isKey) {		//ÓÃ»§×Ô¶¨ÒåµÄ±êÊ¶·û
+				if (-1 == isKey) {		//ç”¨æˆ·è‡ªå®šä¹‰çš„æ ‡è¯†ç¬¦
 					vector<string>::iterator iter = InsertTable(token);
 					Return("id", IterToS(iter));
 				}
-				else					//¹Ø¼ü×Ö
+				else					//å…³é”®å­—
 					Return(token, "-");
 			}
 			break;
-		case 2:										//ÎŞ·ûºÅÊı×´Ì¬
+		case 2:										//æ— ç¬¦å·æ•°çŠ¶æ€
 			Cat();
 			GetChar();
-			switch (ch){
+			switch (ch) {
 			case '1':case '2': case '3': case'4':case'5':case'6':case'7':case'8':case '9':case '0':
 				state = 2;
 				break;
@@ -172,7 +162,7 @@ int  main(void) {
 				break;
 			}//switch(ch) case 2
 			break;
-		case 3:										//Ğ¡Êıµã×´Ì¬
+		case 3:										//å°æ•°ç‚¹çŠ¶æ€
 			Cat();
 			GetChar();
 			if (isdigit(ch))
@@ -182,12 +172,12 @@ int  main(void) {
 				state = 0;
 			}
 			break;
-		case 4:										//Ğ¡Êı×´Ì¬
+		case 4:										//å°æ•°çŠ¶æ€
 			Cat();
 			GetChar();
 			if (isdigit(ch))
 				state = 4;
-			else if ('E' == ch) 
+			else if ('E' == ch)
 				state = 5;
 			else {
 				state = 0;
@@ -195,7 +185,7 @@ int  main(void) {
 				Return("num", token);
 			}
 			break;
-		case 5:										//Ö¸Êı×´Ì¬
+		case 5:										//æŒ‡æ•°çŠ¶æ€
 			Cat();
 			GetChar();
 			if (isdigit(ch))
@@ -228,7 +218,7 @@ int  main(void) {
 				Return("num", token);
 			}
 			break;
-		case 8:										//'<'×´Ì¬
+		case 8:										//'<'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -241,7 +231,7 @@ int  main(void) {
 				Return("operater_r", "LT");
 			}
 			break;
-		case 9:										//'+'×´Ì¬
+		case 9:										//'+'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('+' == ch) {
@@ -258,7 +248,7 @@ int  main(void) {
 				Return("+", "-");
 			}
 			break;
-		case 10:									//'-'×´Ì¬
+		case 10:									//'-'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('-' == ch) {
@@ -275,7 +265,7 @@ int  main(void) {
 				Return("-", "-");
 			}
 			break;
-		case 11:									//'='×´Ì¬
+		case 11:									//'='çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -288,7 +278,7 @@ int  main(void) {
 				Return("operater_as", "E");
 			}
 			break;
-		case 12:									//'/'×´Ì¬
+		case 12:									//'/'çŠ¶æ€
 			Cat();
 			GetChar();
 			switch (ch) {
@@ -309,7 +299,7 @@ int  main(void) {
 				break;
 			}
 			break;
-		case 13:									//'*'×´Ì¬
+		case 13:									//'*'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -322,7 +312,7 @@ int  main(void) {
 				Return("*", "-");
 			}
 			break;
-		case 14:									//'%'×´Ì¬
+		case 14:									//'%'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -335,7 +325,7 @@ int  main(void) {
 				Return("%", "-");
 			}
 			break;
-		case 15:									//'&'×´Ì¬
+		case 15:									//'&'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('&' == ch) {
@@ -348,7 +338,7 @@ int  main(void) {
 				Return("&", "-");
 			}
 			break;
-		case 16:									//'|'×´Ì¬
+		case 16:									//'|'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('|' == ch) {
@@ -360,7 +350,7 @@ int  main(void) {
 				Error();
 			}
 			break;
-		case 17:									//'?'×´Ì¬
+		case 17:									//'?'çŠ¶æ€
 			Cat();
 			GetChar();
 			if (':' == ch) {
@@ -372,7 +362,7 @@ int  main(void) {
 				Error();
 			}
 			break;
-		case 18:										//"/*"×´Ì¬
+		case 18:										//"/*"çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('*' == ch)
@@ -380,7 +370,7 @@ int  main(void) {
 			else
 				state = 18;
 			break;
-		case 19:										// "/**"×´Ì¬
+		case 19:										// "/**"çŠ¶æ€
 			Cat();
 			GetChar();
 			switch (ch)
@@ -388,8 +378,8 @@ int  main(void) {
 			case '*':
 				state = 19;
 				break;
-			case '/':		
-				/* Ìø¹ı×¢ÊÍ */
+			case '/':
+				/* è·³è¿‡æ³¨é‡Š */
 				state = 0;
 				break;
 			default:
@@ -397,16 +387,16 @@ int  main(void) {
 				break;
 			}
 			break;
-		case 21:										//"//"×´Ì¬
+		case 21:										//"//"çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('\n' == ch)
-				/* Ìø¹ı×¢ÊÍ */
+				/* è·³è¿‡æ³¨é‡Š */
 				state = 0;
 			else
 				state = 21;
 			break;
-		case 22:										//"""×´Ì¬
+		case 22:										//"""çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('"' != ch)
@@ -416,7 +406,7 @@ int  main(void) {
 				Return("STRING", token);
 			}
 			break;
-		case 23:										//'!'×´Ì¬
+		case 23:										//'!'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -429,7 +419,7 @@ int  main(void) {
 				Return("operater_l", "NOT");
 			}
 			break;
-		case 24:										//'>'×´Ì¬
+		case 24:										//'>'çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -442,7 +432,7 @@ int  main(void) {
 				Return("operater_r", "GT");
 			}
 			break;
-		case 25:											//'^'ÔËËã·û
+		case 25:											//'^'è¿ç®—ç¬¦
 			Cat();
 			GetChar();
 			if (':' == ch) {
@@ -454,18 +444,18 @@ int  main(void) {
 				Error();
 			}
 			break;
-		case 26:											//"'"×´Ì¬
+		case 26:											//"'"çŠ¶æ€
 			Cat();
 			GetChar();
-			if ('\0' == ch || '\t'==ch || '\n'== ch || '\b'==ch||'f'==ch
-				|| '\\'==ch||'\''== ch|| isdigit(ch)|| isalpha(ch)) 
+			if ('\0' == ch || '\t' == ch || '\n' == ch || '\b' == ch || 'f' == ch
+				|| '\\' == ch || '\'' == ch || isdigit(ch) || isalpha(ch))
 				state = 28;
 			else {
 				Error();
 				state = 0;
 			}
 			break;
-		case 27:											//"'x"×´Ì¬
+		case 27:											//"'x"çŠ¶æ€
 			Cat();
 			GetChar();
 			if ('\'' == ch) {
