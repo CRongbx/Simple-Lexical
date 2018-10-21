@@ -18,8 +18,8 @@ const string key[KEY_SIZE] = { "char","double","enum","float","int","long","shor
 /*---------------------------全局变量--------------------------*/
 ofstream fout("test_out.txt");		//输出文件
 ifstream fin("test_in.txt");		//输入文件
-fstream fmid("test_pure.txt");	//过滤后的文件
-long long int fmidPtr = 0;		//中间文件的文件指针
+fstream fmid("test_pure.txt");		//过滤后的文件
+ofstream table("table.txt");		//输出标识符符号表
 int isKey = -1;		//标志单词是否为关键字，若是则为列表key中的下标；否则为-1	
 char ch = '\0';		//字符变量，存放当前从文件读入的字符
 string token = "";	//字符串，存放当前正在识别的单词字符串；
@@ -27,6 +27,12 @@ string buffer(BUFFER_SIZE * 2, '\0');	//输入缓冲区
 unsigned int forwardPtr = 0;		//字符串下标，配对缓冲区时的向前指针
 unsigned int beginPtr = 0;			//字符串下标，配对缓冲区时的开始指针
 vector<string> userDefinedIdTable;		//用户自定义的标识符符号表
+struct SourceFileInfo {					
+	unsigned int numRow = 0;			//行数
+	unsigned int numToken = 0;			//单词个数
+	unsigned int numChar = 0;			//字符个数
+} ;
+struct SourceFileInfo sourceFileInfo;	//源文件的统计信息
 
 /*------------------------函数声明-----------------------------*/
 //向buffer中读入数据，一次读入半个缓冲区，用left的布尔值表示填充左/右半区
@@ -49,4 +55,9 @@ string IntToS(const int index);
 int InsertTable(const string token);
 //错误处理
 void Error();
+//输出标识符符号表到指定文件
+void PutTable();
+//输出源程序统计信息结果
+void PutSourceFileInfo();
+
 #endif

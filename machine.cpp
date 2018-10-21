@@ -2,8 +2,6 @@
 
 void PutBuffer(bool left)
 {
-	//获取中间文件get指针位置
-	//fmidPtr = fmid.tellg();
 	int l, r;		//Buffer的左右端指针
 	if (left) {
 		l = 0;
@@ -45,9 +43,9 @@ void GetPure()
 	char c;
 
 	c = fin.get();
+	sourceFileInfo.numChar++;
 	preC = '\0';
 	while (!fin.eof()) {
-
 		switch (state) {
 		case 0:
 			switch (c)
@@ -55,6 +53,10 @@ void GetPure()
 			case ' ': case '\t':case'\f': case '\v':case '\r':
 				/* 跳过转义字符 */
 				state = 0;
+				break;
+			case '\n':
+				state = 0;
+				sourceFileInfo.numRow++;
 				break;
 			case '/':
 				state = 1;
@@ -88,6 +90,10 @@ void GetPure()
 			/* 忽略""中的注释符号 */
 			if (c == '\"')
 				state = 0;
+			else if (c == '\n') {
+				state = 2;
+				sourceFileInfo.numRow++;
+			}
 			else
 				state = 2;
 			fmid << c;
@@ -95,7 +101,10 @@ void GetPure()
 		case 3:
 			if ('*' == c)
 				state = 4;
-			else
+			else if ('\n' == c) {
+				state = 3;
+				sourceFileInfo.numRow++;
+			}
 				state = 3;
 			break;
 		case 4:
@@ -106,6 +115,11 @@ void GetPure()
 				break;
 			case '/':
 				state = 0;
+				fmid << '\n';
+				break;
+			case '\n':
+				state = 3;
+				sourceFileInfo.numRow++;
 				break;
 			default:
 				state = 3;
@@ -113,8 +127,11 @@ void GetPure()
 			}
 			break;
 		case 5:
-			if ('\n' == c)
+			if ('\n' == c) {
+				fmid << '\n';
+				sourceFileInfo.numRow++;
 				state = 0;
+			}
 			else
 				state = 5;
 			break;
@@ -123,6 +140,7 @@ void GetPure()
 		}
 		preC = c;
 		c = fin.get();	//“>>”会跳过换行符
+		sourceFileInfo.numChar++;
 	}
 	fin.close();
 	/* 将中间文件的文件指针定位到开头，方便后续词法分析处理 */
@@ -136,6 +154,9 @@ void Return(string token, string value)
 {
 	//以<token,value>的形式写入out文件
 	fout << '<' << token << ',' << value << '>' << endl;
+
+	//单词数加一
+	sourceFileInfo.numToken++;
 
 	//移动开始指针和向前指针到下一个单词
 	if (forwardPtr == BUFFER_SIZE - 1) {
@@ -196,4 +217,23 @@ int InsertTable(const string token)
 void Error()
 {
 	cout << "ERROR!" << endl;
+}
+
+void PutTable()
+{
+	vector<string>::iterator it;
+	for (it = userDefinedIdTable.begin();it != userDefinedIdTable.end(); ++it) {
+		table << '[' << *it << ',' << distance(userDefinedIdTable.begin(), it) << ']' << endl;
+	}
+}
+
+void PutSourceFileInfo()
+{
+	ofstream sourceInfo("source_info_out.txt");
+
+	sourceInfo << "number of char:" << sourceFileInfo.numChar << endl;
+	sourceInfo << "number of row:" << sourceFileInfo.numRow << endl;
+	sourceInfo << "number of token:" << sourceFileInfo.numToken << endl;
+
+	sourceInfo.close();
 }

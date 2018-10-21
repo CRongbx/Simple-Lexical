@@ -1,21 +1,17 @@
 ﻿#include <cctype>			//isdigit(),isalpha()
 #include <algorithm>		//find():在vector中查找指定元素，返回指向该元素的迭代器指针
 #include "machine.h"
-#define BUFFER_SIZE 10		//输入缓冲区大小
 using namespace std;
 
 int  main(void) {
-	fin.seekg(0);	//设置文件get流指针位置为文件起始处
-	fout.seekp(0);	//设置文件put流指针位置为文件起始处
 	int state = 0;	//自动机当前状态
 
-	while (!fin.eof()) {
-		fin >> ch;
+	GetPure();		//过滤注释和无用字符
+	do {
 		switch (state) {
 		case 0:
 			token = "";
 			GetChar();
-			GetPure();
 			switch (ch) {
 			case ';':
 				state = 0;
@@ -80,17 +76,8 @@ int  main(void) {
 			case '=':
 				state = 11;
 				break;
-			case '\\':
-				state = 27;
-				break;
 			case '/':
 				state = 12;
-				break;
-			case '"':
-				state = 22;
-				break;
-			case '\'':
-				state = 26;
 				break;
 			case '*':
 				state = 13;
@@ -98,23 +85,29 @@ int  main(void) {
 			case '%':
 				state = 14;
 				break;
-			case '|':
-				state = 16;
-				break;
 			case '&':
 				state = 15;
+				break;
+			case '|':
+				state = 16;
 				break;
 			case '?':
 				state = 17;
 				break;
+			case '\"':
+				state = 18;
+				break;
+			case '\'':
+				state = 19;
+				break;
 			case '>':
-				state = 24;
+				state = 21;
 				break;
 			case '!':
-				state = 23;
+				state = 22;
 				break;
 			case '^':
-				state = 25;
+				state = 23;
 				break;
 			default:
 				Error();
@@ -245,7 +238,7 @@ int  main(void) {
 				Return("+", "-");
 			}
 			break;
-		case 10:									//'-'状态
+		case 10:											//'-'状态
 			Cat();
 			GetChar();
 			if ('-' == ch) {
@@ -262,7 +255,7 @@ int  main(void) {
 				Return("-", "-");
 			}
 			break;
-		case 11:									//'='状态
+		case 11:											//'='状态
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -275,19 +268,13 @@ int  main(void) {
 				Return("operater_as", "E");
 			}
 			break;
-		case 12:									//'/'状态
+		case 12:											//'/'状态
 			Cat();
 			GetChar();
 			switch (ch) {
 			case '=':
 				state = 0;
 				Return("operater_as", "DE");
-				break;
-			case '*':
-				state = 18;
-				break;
-			case '/':
-				state = 21;
 				break;
 			default:
 				state = 0;
@@ -296,7 +283,7 @@ int  main(void) {
 				break;
 			}
 			break;
-		case 13:									//'*'状态
+		case 13:											//'*'状态
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -309,7 +296,7 @@ int  main(void) {
 				Return("*", "-");
 			}
 			break;
-		case 14:									//'%'状态
+		case 14:											//'%'状态
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -322,7 +309,7 @@ int  main(void) {
 				Return("%", "-");
 			}
 			break;
-		case 15:									//'&'状态
+		case 15:											//'&'状态
 			Cat();
 			GetChar();
 			if ('&' == ch) {
@@ -335,7 +322,7 @@ int  main(void) {
 				Return("&", "-");
 			}
 			break;
-		case 16:									//'|'状态
+		case 16:											//'|'状态
 			Cat();
 			GetChar();
 			if ('|' == ch) {
@@ -347,7 +334,7 @@ int  main(void) {
 				Error();
 			}
 			break;
-		case 17:									//'?'状态
+		case 17:											//'?'状态
 			Cat();
 			GetChar();
 			if (':' == ch) {
@@ -359,64 +346,42 @@ int  main(void) {
 				Error();
 			}
 			break;
-		case 18:										//"/*"状态
+		case 18:											//"\""状态
 			Cat();
 			GetChar();
-			if ('*' == ch)
-				state = 19;
-			else
-				state = 18;
-			break;
-		case 19:										// "/**"状态
-			Cat();
-			GetChar();
-			switch (ch)
-			{
-			case '*':
-				state = 19;
-				break;
-			case '/':
-				/* 跳过注释 */
-				state = 0;
-				break;
-			default:
-				state = 18;
-				break;
-			}
-			break;
-		case 21:										//"//"状态
-			Cat();
-			GetChar();
-			if ('\n' == ch)
-				/* 跳过注释 */
-				state = 0;
-			else
-				state = 21;
-			break;
-		case 22:										//"""状态
-			Cat();
-			GetChar();
-			if ('"' != ch)
-				state = 22;
-			else {
+			if ('\"' == ch) {
 				state = 0;
 				Return("STRING", token);
 			}
+			else
+				state = 18;
 			break;
-		case 23:										//'!'状态
+		case 19:											// "\'"状态
 			Cat();
 			GetChar();
-			if ('=' == ch) {
+			if ('\0' == ch || '\t' == ch || '\n' == ch || '\b' == ch || 'f' == ch
+				|| '\\' == ch || '\'' == ch || isdigit(ch) || isalpha(ch))
+				state = 20;
+			else {
+				Error();
 				state = 0;
-				Return("operater_r", "NE");
+			}
+			break;
+		case 20:											//"'x"状态
+			Cat();
+			GetChar();
+			if ('\'' == ch) {
+				state = 0;
+				Return("CHAR", token);
 			}
 			else {
 				state = 0;
-				Retract();
-				Return("operater_l", "NOT");
+				Error();
 			}
 			break;
-		case 24:										//'>'状态
+		case 21:										//">"状态
+			Cat();
+			GetChar();
 			Cat();
 			GetChar();
 			if ('=' == ch) {
@@ -429,7 +394,20 @@ int  main(void) {
 				Return("operater_r", "GT");
 			}
 			break;
-		case 25:											//'^'运算符
+		case 22:										//"!"状态
+			Cat();
+			GetChar();
+			if ('=' == ch) {
+				state = 0;
+				Return("operater_r", "NE");
+			}
+			else {
+				state = 0;
+				Retract();
+				Return("operater_l", "NOT");
+			}
+			break;
+		case 23:											//'^'运算符
 			Cat();
 			GetChar();
 			if (':' == ch) {
@@ -441,36 +419,14 @@ int  main(void) {
 				Error();
 			}
 			break;
-		case 26:											//"'"状态
-			Cat();
-			GetChar();
-			if ('\0' == ch || '\t' == ch || '\n' == ch || '\b' == ch || 'f' == ch
-				|| '\\' == ch || '\'' == ch || isdigit(ch) || isalpha(ch))
-				state = 28;
-			else {
-				Error();
-				state = 0;
-			}
-			break;
-		case 27:											//"'x"状态
-			Cat();
-			GetChar();
-			if ('\'' == ch) {
-				state = 0;
-				Return("CHAR", token);
-			}
-			else {
-				state = 0;
-				Error();
-			}
-			break;
 		default:
 			break;
 		}//switch(state)
-	}//while
+	} while (!fmid.eof());
+	PutTable();
+	PutSourceFileInfo();
 
-
-	fin.close();
+	fmid.close();
 	fout.close();
 	return 0;
 }
