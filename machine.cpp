@@ -266,11 +266,24 @@ void PutSourceFileInfo()
 	sourceInfo << "number of char:" << sourceFileInfo.numChar << endl;
 	sourceInfo << "number of row:" << sourceFileInfo.numRow << endl;
 	sourceInfo << "number of token:" << sourceFileInfo.numToken << endl;
-
+	//sourceInfo << "标识符总个数：" << sourceFileInfo.numId << endl;
+	//sourceInfo << "常数总个数：" << sourceFileInfo.numNum << endl;
+	//sourceInfo << "运算符个数：" << sourceFileInfo.numOper << endl;
+	//sourceInfo << "标点个数：" << sourceFileInfo.numPunc << endl;
+	//sourceInfo << "字符串个数：" << sourceFileInfo.numString << endl;
+	//sourceInfo << "字符个数：" << sourceFileInfo.numChar << endl;
+	//sourceInfo << "注释个数：" << sourceFileInfo.numNote << endl;
 	sourceInfo.close();
 
 	cout << "----------------------------------------------------" << endl;
 	cout << "字符总个数:" << sourceFileInfo.numChar << endl;
 	cout << "总行数:" << sourceFileInfo.numRow << endl;
 	cout << "单词总个数:" << sourceFileInfo.numToken << endl;
+	//cout << "标识符总个数：" << sourceFileInfo.numId << endl;
+	//cout << "常数总个数：" << sourceFileInfo.numNum << endl;
+	//cout << "运算符个数：" << sourceFileInfo.numOper << endl;
+	//cout << "标点个数：" << sourceFileInfo.numPunc << endl;
+	//cout << "字符串个数：" << sourceFileInfo.numString << endl;
+	//cout << "字符个数：" << sourceFileInfo.numChar << endl;
+	//cout << "注释个数：" << sourceFileInfo.numNote << endl;
 }

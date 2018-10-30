@@ -32,11 +32,13 @@ struct SourceFileInfo {
 	unsigned int numRow = 1;			//行数（初始行数应为0）
 	unsigned int numChar = 0;			//字符个数
 	unsigned int numToken = 0;			//单词个数
-	unsigned int numId = 0;				//标识符个数
-	unsigned int numNum = 0;			//常数个数
-	unsigned int numOper = 0;			//运算符个数
-	unsigned int numPunc = 0;			//标点符号个数
-
+	//unsigned int numId = 0;				//标识符个数
+	//unsigned int numNum = 0;			//常数个数
+	//unsigned int numOper = 0;			//运算符个数
+	//unsigned int numPunc = 0;			//标点符号个数
+	//unsigned int numString = 0;			//字符串数目
+	//unsigned int numChar = 0;			//字符常量数目
+	//unsigned int numNote = 0;			//注释数目
 } ;
 extern struct SourceFileInfo sourceFileInfo;	//源文件的统计信息
 
