@@ -1,0 +1,3 @@
+number of char:25
+number of row:4
+number of token:5

@@ -12,7 +12,8 @@ void PutBuffer(bool left)
 		r = 2 * BUFFER_SIZE - 1;
 	}
 
-	for (int i = l;i <= r;++i) 
+	int i = 1;
+	for (i = l;!fmid.eof() && i <= r;++i)
 		buffer[i] = fmid.get();
 }
 
@@ -32,8 +33,15 @@ void GetChar()
 		PutBuffer(true);
 		forwardPtr = 0;
 	}
-	else 
+	else
 		forwardPtr++;
+}
+
+void GetNBC()
+{
+	while (' ' == ch) {
+		GetChar();
+	}
 }
 
 void GetPure()
@@ -43,6 +51,8 @@ void GetPure()
 	char c;
 
 	c = fin.get();
+	//清空原文件内容
+	fstream fmid("test_pure.txt", ios::out);
 	sourceFileInfo.numChar++;
 	preC = '\0';
 	while (!fin.eof()) {
@@ -50,12 +60,14 @@ void GetPure()
 		case 0:
 			switch (c)
 			{
-			case ' ': case '\t':case'\f': case '\v':case '\r':
-				/* 跳过转义字符 */
+			case' ':case '\t':case'\f': case '\v':case '\r':
+				/* 跳过转义字符,用空格来代替（划分词语） */
 				state = 0;
+				fmid << ' ';
 				break;
 			case '\n':
 				state = 0;
+				fmid << '\n';
 				sourceFileInfo.numRow++;
 				break;
 			case '/':
@@ -92,6 +104,7 @@ void GetPure()
 				state = 0;
 			else if (c == '\n') {
 				state = 2;
+				fmid << '\n';
 				sourceFileInfo.numRow++;
 			}
 			else
@@ -105,7 +118,7 @@ void GetPure()
 				state = 3;
 				sourceFileInfo.numRow++;
 			}
-				state = 3;
+			state = 3;
 			break;
 		case 4:
 			switch (c)
@@ -119,6 +132,7 @@ void GetPure()
 				break;
 			case '\n':
 				state = 3;
+				fmid << '\n';
 				sourceFileInfo.numRow++;
 				break;
 			default:
@@ -143,11 +157,11 @@ void GetPure()
 		sourceFileInfo.numChar++;
 	}
 	fin.close();
-	/* 将中间文件的文件指针定位到开头，方便后续词法分析处理 */
-	//读取到文件末尾时，流状态是eof，需要将其设置为goodbit才能成功将文件指针移动到文件开头。
-	fmid.clear(ios::goodbit);
-	fmid.seekg(ios::beg);
-	fmid.seekp(ios::beg);
+	/* 将中间文件的文件指针定位到开头，方便后续词法分析处理 读取到文件末尾时，流状态是eof，
+	需要将其设置为goodbit才能成功将文件指针移动到文件开头。不可在函数里设置，*/
+	fmid.clear();
+	fmid.seekg(0, ios::beg);
+
 }
 
 void Return(string token, string value)
@@ -157,21 +171,8 @@ void Return(string token, string value)
 
 	//单词数加一
 	sourceFileInfo.numToken++;
-
-	//移动开始指针和向前指针到下一个单词
-	if (forwardPtr == BUFFER_SIZE - 1) {
-		//左半区终点，填充右半区buffer
-		PutBuffer(false);
-		beginPtr = ++forwardPtr;
-	}
-	else if (forwardPtr == BUFFER_SIZE * 2 - 1) {
-		//右半区终点，填充左半区buffer
-		PutBuffer(true);
-		beginPtr = 0;
-		forwardPtr = 0;
-	}
-	else
-		beginPtr = ++forwardPtr;
+	//开始指针指向下一个单词起始
+	beginPtr = forwardPtr;
 }
 
 void Cat()
@@ -196,7 +197,7 @@ void Retract()
 
 int FindKey(const string token)
 {
-	for (int i = 0; i < KEY_SIZE;++i) 
+	for (int i = 0; i < KEY_SIZE;++i)
 		if (key[i] == token)
 			return i;
 	return -1;
@@ -209,14 +210,45 @@ string IntToS(const int index)
 
 int InsertTable(const string token)
 {
+	//先检查该标识符是否已经在表中（是否已经出现过）
+	for (vector<string>::iterator it = userDefinedIdTable.begin();
+		it != userDefinedIdTable.end(); it++) {
+		if (*it == token)
+			return (it - userDefinedIdTable.begin() + 1);
+	}
 	userDefinedIdTable.push_back(token);
 	//该元素的位置指针，由于始终从最后加入vector故位置序号等于容器大小-1
-	return (userDefinedIdTable.size()-1);
+	return (userDefinedIdTable.size() - 1);
 }
 
-void Error()
+void Error(const int row, const int state)
 {
-	cout << "ERROR!" << endl;
+	cout << "ERROR! " << "row = " << row << ": ";
+	switch (state) {
+	case 0:
+		cout << "输入非法字符！" << endl;
+		break;
+	case 2:
+		cout << "标识符命名错误！" << endl;
+		break;
+	case 3: case 5: case 6:
+		cout << "常数/标识符格式错误！" << endl;
+		break;
+	case 16:
+		cout << "应为“||”运算符" << endl;
+		break;
+	case 17:
+		cout << "应为“?:”运算符" << endl;
+		break;
+	case 20:
+		cout << "字符常量定义错误！" << endl;
+		break;
+	default:
+		break;
+	}
+
+	/*出错后，向前指针向前移动一个，跳过错误*/
+	beginPtr = ++forwardPtr;
 }
 
 void PutTable()
@@ -236,4 +268,9 @@ void PutSourceFileInfo()
 	sourceInfo << "number of token:" << sourceFileInfo.numToken << endl;
 
 	sourceInfo.close();
+
+	cout << "----------------------------------------------------" << endl;
+	cout << "字符总个数:" << sourceFileInfo.numChar << endl;
+	cout << "总行数:" << sourceFileInfo.numRow << endl;
+	cout << "单词总个数:" << sourceFileInfo.numToken << endl;
 }

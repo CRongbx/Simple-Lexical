@@ -3,16 +3,45 @@
 #include "machine.h"
 using namespace std;
 
+ofstream fout("test_out.txt",ios::trunc);		//输出文件（覆盖式）
+ifstream fin("test_in.txt");		//输入文件
+fstream fmid("test_pure.txt");		//过滤后的文件,可读可写
+ofstream table("table.txt");		//输出标识符符号表
+int isKey = -1;		//标志单词是否为关键字，若是则为列表key中的下标；否则为-1	
+char ch = '\0';		//字符变量，存放当前从文件读入的字符
+unsigned int row = 1;	//记录当前读入字符的所在行号
+string token = "";	//字符串，存放当前正在识别的单词字符串；
+string buffer(BUFFER_SIZE * 2, '\0');	//输入缓冲区
+unsigned int forwardPtr =0;		//字符串下标，配对缓冲区时的向前指针
+unsigned int beginPtr = 0;			//字符串下标，配对缓冲区时的开始指针
+vector<string> userDefinedIdTable;		//用户自定义的标识符符号表
+struct SourceFileInfo sourceFileInfo;	//源文件的统计信息
+
 int  main(void) {
 	int state = 0;	//自动机当前状态
 
 	GetPure();		//过滤注释和无用字符
+	PutBuffer(true);	//先填充左半区buffer
+
+	/*输入界面友好性*/
+	cout << "欢迎使用C语言简易版语法分析器！" << endl;
+	cout << "请将待分析程序放置test_in.txt文件:" << endl;
+	cout << "输出记号流放至test_out.txt文件，标识符符号表放至table.txt文件，"
+		<< "文本信息放至source_info_out.txt文件" << endl<<
+		"----------------------------------------------------" << endl;
+
 	do {
 		switch (state) {
 		case 0:
 			token = "";
 			GetChar();
+			GetNBC();
 			switch (ch) {
+			case EOF :	//文件结束符
+				break;
+			case '\n':
+				row++;
+				break;
 			case ';':
 				state = 0;
 				Return(";", "-");
@@ -52,6 +81,7 @@ int  main(void) {
 			case '.':
 				state = 0;
 				Return(".", "-");
+				break;
 			case '_':
 			case 'a': case 'b': case 'c': case 'd': case 'e':case 'f': case 'g': case 'h': case 'i':
 			case 'j': case 'k': case 'l':case 'm': case 'n':case 'o': case 'p': case 'q': case 'r':
@@ -110,7 +140,7 @@ int  main(void) {
 				state = 23;
 				break;
 			default:
-				Error();
+				Error(row, 0);
 				state = 0;
 				break;
 			}//switch(ch) case 0
@@ -142,6 +172,15 @@ int  main(void) {
 			case 'E':
 				state = 5;
 				break;
+			case 'a': case 'b': case 'c': case 'd': case 'e':case 'f': case 'g': case 'h': case 'i':
+			case 'j': case 'k': case 'l':case 'm': case 'n':case 'o': case 'p': case 'q': case 'r':
+			case 's':case 't': case 'u':case 'v': case 'w': case 'x': case 'y':case 'z':case 'A':
+			case 'B':case 'C': case 'D': case 'F': case 'G': case 'H': case 'I':case 'J':
+			case 'K': case 'L':case 'M': case 'N': case 'O': case 'P':case 'Q': case 'R': case 'S':
+			case 'T': case 'U': case 'V': case 'W':case 'X': case 'Y': case 'Z':
+				state = 0;
+				Error(row, 2);
+				break;
 			case '.':
 				state = 3;
 				break;
@@ -158,7 +197,7 @@ int  main(void) {
 			if (isdigit(ch))
 				state = 4;
 			else {
-				Error();
+				Error(row,3);
 				state = 0;
 			}
 			break;
@@ -184,7 +223,7 @@ int  main(void) {
 				state = 6;
 			else {
 				state = 0;
-				Error();
+				Error(row, 5);
 			}
 			break;
 		case 6:
@@ -194,7 +233,7 @@ int  main(void) {
 				state = 7;
 			else {
 				state = 0;
-				Error();
+				Error(row, 6);
 			}
 			break;
 		case 7:
@@ -214,6 +253,10 @@ int  main(void) {
 			if ('=' == ch) {
 				state = 0;
 				Return("operater_r", "LE");
+			}
+			else if ('<'== ch) {
+				state = 0;
+				Return("<<", "-");
 			}
 			else {
 				state = 0;
@@ -331,7 +374,7 @@ int  main(void) {
 			}
 			else {
 				state = 0;
-				Error();
+				Error(row, 16);
 			}
 			break;
 		case 17:											//'?'状态
@@ -343,7 +386,7 @@ int  main(void) {
 			}
 			else {
 				state = 0;
-				Error();
+				Error(row, 17);
 			}
 			break;
 		case 18:											//"\""状态
@@ -353,19 +396,17 @@ int  main(void) {
 				state = 0;
 				Return("STRING", token);
 			}
+			else if ('\n' == ch) {
+				state = 18;
+				row++;
+			}
 			else
 				state = 18;
 			break;
 		case 19:											// "\'"状态
 			Cat();
 			GetChar();
-			if ('\0' == ch || '\t' == ch || '\n' == ch || '\b' == ch || 'f' == ch
-				|| '\\' == ch || '\'' == ch || isdigit(ch) || isalpha(ch))
-				state = 20;
-			else {
-				Error();
-				state = 0;
-			}
+			state = 20;
 			break;
 		case 20:											//"'x"状态
 			Cat();
@@ -376,7 +417,7 @@ int  main(void) {
 			}
 			else {
 				state = 0;
-				Error();
+				Error(row, 19);
 			}
 			break;
 		case 21:										//">"状态
@@ -387,6 +428,10 @@ int  main(void) {
 			if ('=' == ch) {
 				state = 0;
 				Return("operater_r", "GE");
+			}
+			else if('>'==ch) {
+				state = 0;
+				Return(">>", "-");
 			}
 			else {
 				state = 0;
@@ -410,23 +455,25 @@ int  main(void) {
 		case 23:											//'^'运算符
 			Cat();
 			GetChar();
-			if (':' == ch) {
+			if ('=' == ch) {
 				state = 0;
 				Return("operater_as", "XE");
 			}
 			else {
 				state = 0;
-				Error();
+				Retract();
+				Return("^", "-");
 			}
 			break;
 		default:
 			break;
 		}//switch(state)
-	} while (!fmid.eof());
+	} while (ch != EOF);
 	PutTable();
 	PutSourceFileInfo();
 
 	fmid.close();
 	fout.close();
+	system("pause");
 	return 0;
 }

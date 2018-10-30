@@ -1,1 +1,5 @@
-write somethingA
+<int,->
+<id,0>
+<;,->
+<int,->
+<id,1>
